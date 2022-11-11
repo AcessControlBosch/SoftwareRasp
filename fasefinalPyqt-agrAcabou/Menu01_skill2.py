@@ -199,6 +199,8 @@ class Ui_Menu01_skill2(object):
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint, False)
+        self.setWindowFlag(QtCore.Qt.WindowMinimizeButtonHint, False)
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate

@@ -70,7 +70,7 @@ class Connection:
 
     #Construtor da class faz a conexão
     def __init__(self, db):
-        self.url = 'http://localhost:8000/'
+        self.url = 'http://192.168.0.11:8000/'
         self.banco = sqlite3.connect(db)
         self.nameColadorador = ''
         self.idColadorador = ''
@@ -78,6 +78,7 @@ class Connection:
         self.idReleaseMachine = ''
         # self.requisitosMaquina()
         # self.registros()
+        self.statusMachine()
         self.requisitosMaquinaMeioAmb()
         self.requisitosMaquinaSeguranca()
 
@@ -96,6 +97,12 @@ class Connection:
             # self.todosUsers()
 
             return self.tipo_colaborador(self.json_response.json())
+
+    def statusMachine(self):
+        self.statusMachinejson = requests.get(self.url + 'machines/' + serra_de_perfil).json()
+        print('status machine ---===============',self.statusMachinejson)
+        if self.statusMachinejson['status'] == True:
+            return True
 
     def requisitosMaquinaSeguranca(self):
         self.reqSeguranca= requests.get(self.url + 'greenbooks/1/1/').json()
@@ -324,11 +331,20 @@ class Standby(QMainWindow, Ui_Standby):  # primeira tela que faz a validação d
 
         if reqManutencao.verifica_estado_de_manutencao(serra_de_perfil) == True:
             Menu01.Botao_Liberar_Maquina.setIcon(self.cadeado_manutencao)
+            Menu01Aprendiz.Botao_Liberar_Maquina.setIcon(self.cadeado_manutencao)
+            Menu01_skill2.Botao_Liberar_Maquina.setIcon(self.cadeado_manutencao)
             Menu01.Botao_Liberar_Maquina.setIconSize(QtCore.QSize(231, 231))
+            Menu01Aprendiz.Botao_Liberar_Maquina.setIconSize(QtCore.QSize(231, 231))
+            Menu01_skill2.Botao_Liberar_Maquina.setIconSize(QtCore.QSize(231, 231))
 
         else:
             Menu01.Botao_Liberar_Maquina.setIcon(self.cadeado_normal)
+            Menu01Aprendiz.Botao_Liberar_Maquina.setIcon(self.cadeado_normal)
+            Menu01_skill2.Botao_Liberar_Maquina.setIcon(self.cadeado_normal)
             Menu01.Botao_Liberar_Maquina.setIconSize(QtCore.QSize(220, 220))
+            Menu01Aprendiz.Botao_Liberar_Maquina.setIconSize(QtCore.QSize(220, 220))
+            Menu01_skill2.Botao_Liberar_Maquina.setIconSize(QtCore.QSize(220, 220))
+
     def sairMenu(self):
         banco_dados.todosUsers()
         if (self.colaboradorB[0] == 'n1'):
@@ -431,16 +447,31 @@ class Primeiro_Menu(QMainWindow, Ui_Menu01):
         super().__init__()
         super().setupUi(self)
 
-        # ******************************* AÇÕES *******************************
+    # ******************************* AÇÕES *******************************
 
-        self.maquina_liberada = False
         self.Botao_Seta_Direita.clicked.connect(self.proxima_tela)
         self.Botao_Liberar_Maquina.clicked.connect(self.liberacao_de_maquina)
         self.Botao_Interface_Didatica.clicked.connect(self.interface_didatica)
         self.Botao_Documentos.clicked.connect(self.menu_documentos)
         self.Botao_Registros.clicked.connect(self.menu_registros)
+        self.maquina_liberada = False
 
     # ******************************* FUNÇÕES DA CLASSE *******************************
+
+        self.cadeado_fechado = QIcon("imagens/CADEADO_FECHADO.png")
+        # else:
+        self.img2 = QIcon("imagens/CADEADO_ABERTO.png")
+
+
+
+        self.confMenu()
+    def confMenu(self):
+        if banco_dados.statusMachine() == True:
+            print('A MAQUINA TÁ LIGADAAAAAAAAAAA')
+            self.maquina_liberada = True
+            self.Botao_Liberar_Maquina.setIcon(self.img2)
+        else:
+            pass
 
     def proxima_tela(self): #FUNÇÃO QUE CHAMA O MENU 02.
 
@@ -448,13 +479,27 @@ class Primeiro_Menu(QMainWindow, Ui_Menu01):
         Menu01.hide()
 
     def liberacao_de_maquina(self): #FUNÇÃO QUE INICIA O PROCESSO DE LIBERAÇÃO DE MÁQUINA.
-        print('AQUIIIIIIII HELP')
-        if self.maquina_liberada == False:
-            liberacao_atencao.show()
-            Menu01.hide()
+        # print('AQUIIIIIIII HELP')
+        print('self.maquina_liberada', self.maquina_liberada)
+
+        if reqManutencao.verifica_estado_de_manutencao(serra_de_perfil) == False:
+            if self.maquina_liberada == False:
+                liberacao_atencao.show()
+                Menu01.hide()
+            else:
+                self.Botao_Liberar_Maquina.setIcon(self.img2)
+                # self.c = QIcon("imagens/CADEADO_ABERTO.png")
+                print("segundo else")
 
         else:
+            print("Não deixou entrar")
             pass
+        # if self.maquina_liberada == False:
+        #     liberacao_atencao.show()
+        #     Menu01.hide()
+        #
+        # else:
+        #     pass
 
     def menu_documentos(self): # FUNÇÃO QUE CHAMA A TELA DE MENU DE DOCUMENTOS
         documentos_menu.show()
@@ -483,7 +528,7 @@ class Primeiro_MenuSkill(QMainWindow, Ui_Menu01_skill2):
         self.Botao_Registros.clicked.connect(self.menu_registros)
         self.Botao_Sair.clicked.connect(self.sairFunc)
         self.Botao_Manutencao.clicked.connect(self.manutencao)
-        # self.cadeado_fechado = QIcon("imagens/CADEADO_FECHADO.png")
+        self.cadeado_fechado = QIcon("imagens/CADEADO_FECHADO.png")
 
         # self.Label_Colaborador.setText(f"COLABORADOR: {colaborador}") #DEFINE A LABEL COM O NOME DO COLABORADOR.
         # self.Label_EDV.setText(f"EDV: {edv}") #DEFINE A LABEL COM O EDV DO COLABORADOR.
@@ -494,14 +539,24 @@ class Primeiro_MenuSkill(QMainWindow, Ui_Menu01_skill2):
 
     def liberacao_de_maquina(self): #FUNÇÃO QUE INICIA O PROCESSO DE LIBERAÇÃO DE MÁQUINA.
         print('AQUIIIIIIII HELP')
-        if self.maquina_liberada == False:
-            aviso_liberacao.label_texto.setText("<html><head/><body><p align=\"center\">O(s) seguinte(s) item(s) de Segurança não foram </p><p align=\"center\">marcado(s), o que significa que ele(s) apresenta(m) </p><p align=\"center\">não conformidade:</p></body></html>")
-            liberacao_atencao.show()
-
-            Menu01_skill2.hide()
+        if reqManutencao.verifica_estado_de_manutencao(serra_de_perfil) == False:
+            if self.maquina_liberada == False:
+                liberacao_atencao.show()
+                Menu01_skill2.hide()
+            else:
+                print("segundo else")
 
         else:
-            print(" ")
+            print("Não deixou entrar")
+            pass
+        # if self.maquina_liberada == False:
+        #     aviso_liberacao.label_texto.setText("<html><head/><body><p align=\"center\">O(s) seguinte(s) item(s) de Segurança não foram </p><p align=\"center\">marcado(s), o que significa que ele(s) apresenta(m) </p><p align=\"center\">não conformidade:</p></body></html>")
+        #     liberacao_atencao.show()
+        #
+        #     Menu01_skill2.hide()
+        #
+        # else:
+        #     print(" ")
 
     def menu_documentos(self): # FUNÇÃO QUE CHAMA A TELA DE MENU DE DOCUMENTOS
         documentos_menu.show()
@@ -561,15 +616,17 @@ class Primeiro_MenuAPRENDIZ(QMainWindow, Ui_Menu01Aprendiz):
 
     def liberacao_de_maquina(self):  # FUNÇÃO QUE INICIA O PROCESSO DE LIBERAÇÃO DE MÁQUINA.
         print('AQUIIIIIIII HELP')
-        if self.maquina_liberada == False:
-            aviso_liberacao.label_texto.setText(
-                "<html><head/><body><p align=\"center\">O(s) seguinte(s) item(s) de Segurança não foram </p><p align=\"center\">marcado(s), o que significa que ele(s) apresenta(m) </p><p align=\"center\">não conformidade:</p></body></html>")
-            liberacao_atencao.show()
 
-            Menu01Aprendiz.hide()
+        if reqManutencao.verifica_estado_de_manutencao(serra_de_perfil) == False:
+            if self.maquina_liberada == False:
+                liberacao_atencao.show()
+                Menu01Aprendiz.hide()
+            else:
+                print("segundo else")
 
         else:
-            print(" ")
+            print("Não deixou entrar")
+            pass
 
     def menu_documentos(self):  # FUNÇÃO QUE CHAMA A TELA DE MENU DE DOCUMENTOS
         documentos_menu.show()
@@ -684,7 +741,7 @@ class Liberacao_atencao(QMainWindow, Ui_Atencao):
     # Função que retorna para o Menu01 (HOME).
     def home(self):
         liberacao_atencao.hide()
-        standby.configurar()
+        standby.homeShow()
 
 ################################ TELA DE LIBERAÇÃO DOS REQUISITOS DE SEGURANÇA ################################
 #Tela que o usuário verifica os requisitos de segurança.
@@ -750,7 +807,7 @@ class Liberacao_seguranca(QMainWindow, Ui_Liberacao_Seguranca):
 
 
     def home(self):
-        standby.configurar()
+        standby.homeShow()
         # Menu01.show()
         liberacao_seguranca.hide()
 
@@ -893,7 +950,7 @@ class Liberacao_meio_ambiente(QMainWindow, Ui_Liberacao_Meio_Ambiente):
 
     def home(self):
         liberacao_meio_ambiente.hide()
-        standby.configurar()
+        standby.homeShow()
         # Menu01.show()
 
     # Função que verifica os Chechboxes de meio-ambiente e envia o sinal de uma porta analógica da Raspberry para comutar o contator elétrico caso o status da liberação seja OK.
@@ -1303,7 +1360,7 @@ class Registros_menu(QMainWindow, Ui_Registros_menu):
 
     # Função que volta para o menu
     def home(self):
-        standby.configurar()
+        standby.homeShow()
         # Menu01.show()
         registros_menu.hide()
 
@@ -1841,24 +1898,26 @@ class Manutencao(QMainWindow, Ui_Manutencao):
     def __init__(self):
         super().__init__()
         super().setupUi(self)
+
+
         self.botao_home.clicked.connect(self.home)
         self.botao_energizar_contator_1.clicked.connect(self.energizar_maquina)
         self.botao_energizar_contator_2.clicked.connect(self.energizar_maquina)
         self.botao_liberar_trava1.clicked.connect(self.liberar_trava)
         self.botao_liberar_trava2.clicked.connect(self.liberar_trava)
         self.botao_maquina_manutencao.clicked.connect(self.maquina_em_manutencao)
-        self.cadeado_normal = QIcon("imagens/CADEADO_FECHADO.png")
-        self.cadeado_manutencao = QIcon("imagens/Cadeado_manutencao.png")
 
+        self.cadeado_normal = QIcon("imagens/CADEADO_FECHADO.png")
+        self.cadeado_aberto = QIcon("imagens/CADEADO_ABERTO.png")
+        self.cadeado_manutencao = QIcon("imagens/Cadeado_manutencao.png")
+        self.painel_liberado = False
+        self.painel_energizado = False
 
         if reqManutencao.verifica_estado_de_manutencao(serra_de_perfil) == True:
             self.estado_manutencao = True
 
         else:
             self.estado_manutencao = False
-
-        self.painel_liberado = False
-        self.painel_energizado = False
 
         self.maquina_em_manutencao()
 
@@ -1903,7 +1962,11 @@ class Manutencao(QMainWindow, Ui_Manutencao):
             #se a máquina não estiver em manutenção e se eu colocar sim, vou mandar o estado atual dela que é False e mudar para True
             reqManutencao.estado_manutencao(self.estado_manutencao, serra_de_perfil)
             self.estado_manutencao = True
-            Menu01.Botao_Liberar_Maquina.setIcon(self.cadeado_normal)
+            if banco_dados.statusMachine() == True:
+                print('tá ligada')
+                Menu01.Botao_Liberar_Maquina.setIcon(self.cadeado_aberto)
+            else:
+                Menu01.Botao_Liberar_Maquina.setIcon(self.cadeado_normal)
             Menu01.Botao_Liberar_Maquina.setIconSize(QtCore.QSize(220, 220))
             self.label_sim_nao.move(580, 500)
             self.botao_maquina_manutencao.move(790, 500)
@@ -1936,10 +1999,11 @@ class Manutencao(QMainWindow, Ui_Manutencao):
             self.label_fundo_painel.setStyleSheet(
                 "border-style: outset;\n" "color: rgb(0, 0, 0);\n" "border-color: rgb(0, 0, 0);\n" "border-width:6px;\n" "border-radius: 90px;\n" "font: 75 34pt \"Bosch Sans Bold\";\n"
                 "background-color: rgb(237, 0, 7);")
+
             #GPIO.output(led_manutencao, True)
 
     def home(self):
-        standby.configurar()
+        standby.homeShow()
         manutencao.hide()
 
 class RequestManutencao():
@@ -1982,9 +2046,14 @@ class RequestManutencao():
                 "idMachineFK": maquina,
                 "idAssociateFK": banco_dados.idColadorador,
             }]
-
+            postMachine = banco_dados.url + 'machines/' + serra_de_perfil + '/'
+            patchMachine = {
+                "statusMaint": True
+            }
             try:
                 post = requests.post(postManutencao, json=body)
+                urlPatch = requests.patch(postMachine, patchMachine)
+                print(urlPatch)
                 print(post.json())
                 idMaint = post.json()
                 print(idMaint[0]['id'])
@@ -2002,9 +2071,16 @@ class RequestManutencao():
             }
             postManutencao = banco_dados.url + 'maintenances/' + str(self.idMaint) + '/'
             print(postManutencao)
+            postMachine = banco_dados.url + 'machines/' + serra_de_perfil + '/'
+
+            patchMachine = {
+                "statusMaint": False
+            }
             try:
                 urlPut = requests.patch(postManutencao, patch)
+                urlPatch = requests.patch(postMachine, patchMachine)
                 print('patch value',urlPut)
+                print('patch value',urlPatch)
             except:
                 print('deu erro no patch')
 
